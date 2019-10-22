@@ -21,6 +21,14 @@ type Node struct {
 	Nodes   []Node     `xml:",any"`
 }
 
+const (
+	SLIDE_PATH_PREFIX = "ppt/slides/slide"
+)
+
+func extractLocation(filePath, prefix string) string {
+	return strings.TrimRight(strings.TrimLeft(filePath, prefix), ".xml")
+}
+
 func walk(node *Node, w io.Writer) error {
 	switch node.XMLName.Local {
 	case "t":
@@ -47,7 +55,7 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 		var node Node
 		var buf bytes.Buffer
 
-		if strings.HasPrefix(f.Name, "ppt/slides/slide") {
+		if strings.HasPrefix(f.Name, SLIDE_PATH_PREFIX) {
 			rc, err := f.Open()
 			if err != nil {
 				return err
@@ -70,7 +78,7 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 			}
 
 			if pattern.MatchString(buf.String()) {
-				fmt.Printf("%s: %s\n\n", f.Name, buf.String())
+				fmt.Printf("%s:%s:%s\n", arg, extractLocation(f.Name, SLIDE_PATH_PREFIX), buf.String())
 			}
 		}
 	}
