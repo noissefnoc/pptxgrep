@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"log"
@@ -22,8 +23,17 @@ type Node struct {
 }
 
 const (
+	FNAME             = "pptxgrep"
+	VERSION           = "0.0.1"
 	SLIDE_PATH_PREFIX = "ppt/slides/slide"
 )
+
+func usage() {
+	fmt.Printf("Usage:\n  %s [options] pattern pptx1 [pptx2 ... pptxN]\n\n", FNAME)
+	fmt.Printf("Version:\n  %s\n\n", VERSION)
+	fmt.Printf("Options:\n")
+	flag.PrintDefaults()
+}
 
 func extractLocation(filePath, prefix string) string {
 	return strings.TrimRight(strings.TrimLeft(filePath, prefix), ".xml")
@@ -77,8 +87,10 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 				return err
 			}
 
-			if pattern.MatchString(buf.String()) {
-				fmt.Printf("%s:%s:%s\n", arg, extractLocation(f.Name, SLIDE_PATH_PREFIX), buf.String())
+			unescapedString := html.UnescapeString(buf.String())
+
+			if pattern.MatchString(unescapedString) {
+				fmt.Printf("%s:%s:%s\n", arg, extractLocation(f.Name, SLIDE_PATH_PREFIX), unescapedString)
 			}
 		}
 	}
@@ -86,10 +98,18 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 }
 
 func main() {
+	var version bool
+	flag.BoolVar(&version, "version", false, "print version")
+	flag.Usage = usage
 	flag.Parse()
-	if flag.NArg() == 0 {
-		flag.Usage()
-		os.Exit(1)
+
+	if flag.NArg() <= 1 {
+		if version {
+			fmt.Printf("Version: %s\n", VERSION)
+		} else {
+			flag.Usage()
+		}
+		os.Exit(0)
 	}
 
 	var pattern *regexp.Regexp
