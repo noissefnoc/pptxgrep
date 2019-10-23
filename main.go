@@ -39,6 +39,32 @@ func extractLocation(filePath, prefix string) string {
 	return strings.TrimRight(strings.TrimLeft(filePath, prefix), ".xml")
 }
 
+func colorize(targetStr string, pattern *regexp.Regexp) string {
+	var buf bytes.Buffer
+
+	matchedIdx := pattern.FindAllStringSubmatchIndex(targetStr, -1)
+	startIdx := 0
+
+	for _, startEnd := range matchedIdx {
+		matchedStart := startEnd[0]
+		matchedEnd := startEnd[1]
+
+		fmt.Fprintf(
+			&buf,
+			"%s\x1b[31m%s\x1b[0m",
+			string([]byte(targetStr)[startIdx:matchedStart]),
+			string([]byte(targetStr)[matchedStart:matchedEnd]))
+
+		startIdx = matchedEnd
+	}
+
+	if len(targetStr) > startIdx {
+		fmt.Fprint(&buf, string([]byte(targetStr)[startIdx:]))
+	}
+
+	return buf.String()
+}
+
 func walk(node *Node, w io.Writer) error {
 	switch node.XMLName.Local {
 	case "t":
@@ -54,7 +80,7 @@ func walk(node *Node, w io.Writer) error {
 	return nil
 }
 
-func pptxgrep(pattern *regexp.Regexp, arg string) error {
+func pptxgrep(pattern *regexp.Regexp, arg string, color bool) error {
 	r, err := zip.OpenReader(arg)
 	if err != nil {
 		return err
@@ -90,6 +116,9 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 			unescapedString := html.UnescapeString(buf.String())
 
 			if pattern.MatchString(unescapedString) {
+				if color {
+					unescapedString = colorize(unescapedString, pattern)
+				}
 				fmt.Printf("%s:%s:%s\n", arg, extractLocation(f.Name, SLIDE_PATH_PREFIX), unescapedString)
 			}
 		}
@@ -99,7 +128,9 @@ func pptxgrep(pattern *regexp.Regexp, arg string) error {
 
 func main() {
 	var version bool
+	var color bool
 	flag.BoolVar(&version, "version", false, "print version")
+	flag.BoolVar(&color, "color", false, "colorize matched pattern")
 	flag.Usage = usage
 	flag.Parse()
 
@@ -118,7 +149,7 @@ func main() {
 		if i == 0 {
 			pattern = regexp.MustCompile(arg)
 		} else {
-			if err := pptxgrep(pattern, arg); err != nil {
+			if err := pptxgrep(pattern, arg, color); err != nil {
 				log.Fatal(err)
 			}
 		}
