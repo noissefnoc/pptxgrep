@@ -98,7 +98,7 @@ func pptxgrep(pattern *regexp.Regexp, arg string, color bool) error {
 			}
 			defer rc.Close()
 
-			b, _ := ioutil.ReadAll(rc)
+			b, err := ioutil.ReadAll(rc)
 			if err != nil {
 				return err
 			}
