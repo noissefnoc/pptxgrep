@@ -12,7 +12,7 @@ archive:
   name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
   files:
     - README.md
-  release:
-    github:
-      owner: noissefnoc
-      name: pptxgrep
+release:
+  github:
+    owner: noissefnoc
+    name: pptxgrep
