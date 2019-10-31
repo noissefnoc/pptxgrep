@@ -7,11 +7,13 @@ Usage:
   pptxgrep [options] pattern pptx1 [pptx2 ... pptxN]
 
 Version:
-  0.0.1
+  0.0.2
 
 Options:
   -color
         colorize matched pattern
+  -i
+        ignore case when matching pattern
   -version
         print version
 ```

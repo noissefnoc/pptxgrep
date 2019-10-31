@@ -24,7 +24,7 @@ type Node struct {
 
 const (
 	FNAME             = "pptxgrep"
-	VERSION           = "0.0.1"
+	VERSION           = "0.0.2"
 	SLIDE_PATH_PREFIX = "ppt/slides/slide"
 )
 
@@ -129,8 +129,10 @@ func pptxgrep(pattern *regexp.Regexp, arg string, color bool) error {
 func main() {
 	var version bool
 	var color bool
+	var ignoreCase bool
 	flag.BoolVar(&version, "version", false, "print version")
 	flag.BoolVar(&color, "color", false, "colorize matched pattern")
+	flag.BoolVar(&ignoreCase, "i", false, "ignore case when matching pattern")
 	flag.Usage = usage
 	flag.Parse()
 
@@ -147,6 +149,9 @@ func main() {
 
 	for i, arg := range flag.Args() {
 		if i == 0 {
+			if ignoreCase {
+				arg = `(?i)` + arg
+			}
 			pattern = regexp.MustCompile(arg)
 		} else {
 			if err := pptxgrep(pattern, arg, color); err != nil {
